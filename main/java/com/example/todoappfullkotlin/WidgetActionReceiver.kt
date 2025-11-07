@@ -16,11 +16,14 @@ class WidgetActionReceiver : BroadcastReceiver() {
                         task?.let { t ->
                             t.isCompleted = !t.isCompleted
                             taskManager.updateTask(t)
-
-                            // Add a small delay to ensure data is saved
+                            
+                            // Force commit to complete before widget update
+                            taskManager.saveTasks(taskManager.getAllTasks())
+                            
+                            // Longer delay to ensure cross-process sync
                             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                                 TaskWidget.updateWidget(ctx)
-                            }, 100)
+                            }, 250)
                         }
                     }
                 }

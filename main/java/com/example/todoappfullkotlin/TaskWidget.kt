@@ -139,19 +139,24 @@ class TaskRemoteViewsFactory(private val context: Context) : RemoteViewsService.
     override fun getViewAt(position: Int): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.widget_task_item)
 
-        if (position < tasks.size) {
-            val task = tasks[position]
-            views.setTextViewText(R.id.widgetTaskTitle, task.title)
-            views.setImageViewResource(
-                R.id.widgetCheckbox,
-                if (task.isCompleted) R.drawable.ic_checked else R.drawable.ic_unchecked
-            )
-
-            // Set up fill-in intent for this item
-            val fillInIntent = Intent()
-            fillInIntent.putExtra("TASK_ID", task.id)
-            views.setOnClickFillInIntent(R.id.widgetCheckbox, fillInIntent)
+        if (position >= tasks.size) {
+            // Return a blank but valid view instead of partially initialized view
+            views.setTextViewText(R.id.widgetTaskTitle, "")
+            views.setViewVisibility(R.id.widgetCheckbox, android.view.View.GONE)
+            return views
         }
+
+        val task = tasks[position]
+        views.setTextViewText(R.id.widgetTaskTitle, task.title)
+        views.setImageViewResource(
+            R.id.widgetCheckbox,
+            if (task.isCompleted) R.drawable.ic_checked else R.drawable.ic_unchecked
+        )
+        views.setViewVisibility(R.id.widgetCheckbox, android.view.View.VISIBLE)
+
+        val fillInIntent = Intent()
+        fillInIntent.putExtra("TASK_ID", task.id)
+        views.setOnClickFillInIntent(R.id.widgetCheckbox, fillInIntent)
 
         return views
     }

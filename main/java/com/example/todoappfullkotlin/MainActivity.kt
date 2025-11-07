@@ -27,55 +27,72 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tabLayout: TabLayout
     private lateinit var fab: FloatingActionButton
     private lateinit var deleteAllBtn: Button
-    private val taskManager = TaskManager.getInstance(this)
+    private lateinit var taskManager: TaskManager
     private var currentTab = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        taskManager = TaskManager.getInstance(this)
+        try {
+            setContentView(R.layout.activity_main)
 
-        recyclerView = findViewById(R.id.recyclerView)
-        tabLayout = findViewById(R.id.tabLayout)
-        fab = findViewById(R.id.fab)
-        deleteAllBtn = findViewById(R.id.deleteAllBtn)
-
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        adapter = TaskAdapter(
-            mutableListOf(),
-            onEdit = { task -> showEditDialog(task) },
-            onDelete = { task -> deleteTask(task) },
-            onComplete = { task -> toggleComplete(task) }
-        )
-        recyclerView.adapter = adapter
-
-        val itemTouchHelper = ItemTouchHelper(DragCallback(adapter))
-        itemTouchHelper.attachToRecyclerView(recyclerView)
-
-        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab?) {
-                currentTab = tab?.position ?: 0
-                loadTasks()
-                updateDeleteAllButtonVisibility()
+            // Verify all views exist
+            recyclerView = findViewById(R.id.recyclerView) ?: run {
+                throw IllegalStateException("RecyclerView not found in layout")
             }
-            override fun onTabUnselected(tab: TabLayout.Tab?) {}
-            override fun onTabReselected(tab: TabLayout.Tab?) {}
-        })
+            tabLayout = findViewById(R.id.tabLayout) ?: run {
+                throw IllegalStateException("TabLayout not found in layout")
+            }
+            fab = findViewById(R.id.fab) ?: run {
+                throw IllegalStateException("FAB not found in layout")
+            }
+            deleteAllBtn = findViewById(R.id.deleteAllBtn) ?: run {
+                throw IllegalStateException("DeleteAllBtn not found in layout")
+            }
 
-        fab.setOnClickListener {
-            showAddDialog()
+            recyclerView.layoutManager = LinearLayoutManager(this)
+            adapter = TaskAdapter(
+                mutableListOf(),
+                onEdit = { task -> showEditDialog(task) },
+                onDelete = { task -> deleteTask(task) },
+                onComplete = { task -> toggleComplete(task) }
+            )
+            recyclerView.adapter = adapter
+
+            val itemTouchHelper = ItemTouchHelper(DragCallback(adapter))
+            itemTouchHelper.attachToRecyclerView(recyclerView)
+
+            tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+                override fun onTabSelected(tab: TabLayout.Tab?) {
+                    currentTab = tab?.position ?: 0
+                    loadTasks()
+                    updateDeleteAllButtonVisibility()
+                }
+                override fun onTabUnselected(tab: TabLayout.Tab?) {}
+                override fun onTabReselected(tab: TabLayout.Tab?) {}
+            })
+
+            fab.setOnClickListener {
+                showAddDialog()
+            }
+
+            deleteAllBtn.setOnClickListener {
+                showDeleteAllDialog()
+            }
+
+            if (intent?.action == "ADD_TASK") {
+                showAddDialog()
+            }
+
+            loadTasks()
+            updateDeleteAllButtonVisibility()
+            
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Show error to user
+            Toast.makeText(this, "Error initializing app: ${e.message}", Toast.LENGTH_LONG).show()
+            // Optionally finish the activity or show error screen
         }
-
-        deleteAllBtn.setOnClickListener {
-            showDeleteAllDialog()
-        }
-
-        // Check if opened from widget to add task
-        if (intent?.action == "ADD_TASK") {
-            showAddDialog()
-        }
-
-        loadTasks()
-        updateDeleteAllButtonVisibility()
     }
 
     private fun updateDeleteAllButtonVisibility() {

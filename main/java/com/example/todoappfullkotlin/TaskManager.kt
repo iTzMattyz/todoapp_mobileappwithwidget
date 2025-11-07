@@ -22,9 +22,28 @@ class TaskManager private constructor(context: Context) {
     }
 
     fun getAllTasks(): List<Task> {
-        val json = prefs.getString("tasks", "[]")
-        val type = object : TypeToken<List<Task>>() {}.type
-        return gson.fromJson(json, type) ?: emptyList()
+        return try {
+            val json = prefs.getString("tasks", null)
+            
+            // If null or empty, initialize with empty array
+            if (json.isNullOrEmpty()) {
+                initializeEmptyTasks()
+                return emptyList()
+            }
+            
+            val type = object : TypeToken<List<Task>>() {}.type
+            val tasks: List<Task>? = gson.fromJson(json, type)
+            tasks ?: emptyList()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // If JSON parsing fails, reset to empty
+            initializeEmptyTasks()
+            emptyList()
+        }
+    }
+
+    private fun initializeEmptyTasks() {
+        prefs.edit().putString("tasks", "[]").commit()
     }
 
     fun getActiveTasks(): List<Task> {
